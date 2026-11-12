@@ -1,0 +1,6 @@
+{
+  "name": "中文乐园 · Bài 12 · Lớp Thanh Thiếu Niên",
+  "description": "Ứng dụng học và ôn tập từ vựng, ngữ pháp, luyện viết chữ Hán và trò chơi tiếng Trung Bài 12 với âm thanh lồng tiếng chuẩn xác.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

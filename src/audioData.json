@@ -1,0 +1,152 @@
+[
+  {
+    "id": "xianzai",
+    "word": "现在",
+    "start": 0.35,
+    "dur": 0.48
+  },
+  {
+    "id": "shangwu",
+    "word": "上午",
+    "start": 1.2,
+    "dur": 0.48
+  },
+  {
+    "id": "ji",
+    "word": "几",
+    "start": 2.2,
+    "dur": 0.35
+  },
+  {
+    "id": "shangke",
+    "word": "上课",
+    "start": 2.92,
+    "dur": 0.58
+  },
+  {
+    "id": "dian",
+    "word": "点",
+    "start": 3.97,
+    "dur": 0.38
+  },
+  {
+    "id": "dianzhong",
+    "word": "点钟",
+    "start": 4.72,
+    "dur": 0.58
+  },
+  {
+    "id": "xiake",
+    "word": "下课",
+    "start": 5.73,
+    "dur": 0.6
+  },
+  {
+    "id": "fen",
+    "word": "分",
+    "start": 6.91,
+    "dur": 0.32
+  },
+  {
+    "id": "fenzhong",
+    "word": "分钟",
+    "start": 7.72,
+    "dur": 0.5
+  },
+  {
+    "id": "zhongwu",
+    "word": "中午",
+    "start": 8.66,
+    "dur": 0.6
+  },
+  {
+    "id": "ling",
+    "word": "零",
+    "start": 9.72,
+    "dur": 0.4
+  },
+  {
+    "id": "ke",
+    "word": "刻",
+    "start": 10.56,
+    "dur": 0.35
+  },
+  {
+    "id": "zaoshang",
+    "word": "早上",
+    "start": 11.4,
+    "dur": 0.52
+  },
+  {
+    "id": "wanshang",
+    "word": "晚上",
+    "start": 12.31,
+    "dur": 0.52
+  },
+  {
+    "id": "jintian",
+    "word": "今天",
+    "start": 13.33,
+    "dur": 0.5
+  },
+  {
+    "id": "zuotian",
+    "word": "昨天",
+    "start": 14.32,
+    "dur": 0.48
+  },
+  {
+    "id": "mingtian",
+    "word": "明天",
+    "start": 15.17,
+    "dur": 0.6
+  },
+  {
+    "id": "lingchen",
+    "word": "凌晨",
+    "start": 16.18,
+    "dur": 0.65
+  },
+  {
+    "id": "zaofan",
+    "word": "早饭",
+    "start": 17.29,
+    "dur": 0.53
+  },
+  {
+    "id": "wufan",
+    "word": "午饭",
+    "start": 18.37,
+    "dur": 0.52
+  },
+  {
+    "id": "wanfan",
+    "word": "晚饭",
+    "start": 19.36,
+    "dur": 0.53
+  },
+  {
+    "id": "qichuang",
+    "word": "起床",
+    "start": 20.35,
+    "dur": 0.61
+  },
+  {
+    "id": "chifan",
+    "word": "吃饭",
+    "start": 21.36,
+    "dur": 0.5
+  },
+  {
+    "id": "huijia",
+    "word": "回家",
+    "start": 22.37,
+    "dur": 0.5
+  },
+  {
+    "id": "shuijiao",
+    "word": "睡觉",
+    "start": 23.24,
+    "dur": 0.46
+  }
+]
