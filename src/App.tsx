@@ -1843,11 +1843,15 @@ function ReportSection({
             const inputEl = clonedDoc.querySelector('.student-name-input') as HTMLInputElement | null;
             const textSpan = clonedDoc.querySelector('.student-name-export') as HTMLElement | null;
             if (inputEl) {
-              inputEl.style.display = 'none';
+              inputEl.remove();
             }
             if (textSpan) {
-              textSpan.style.display = 'block';
-              textSpan.textContent = state.studentName ? state.studentName.trim() : '...................................................';
+              textSpan.classList.remove('hidden');
+              textSpan.style.display = 'inline-block';
+              textSpan.style.verticalAlign = 'middle';
+              textSpan.textContent = state.studentName && state.studentName.trim()
+                ? state.studentName.trim()
+                : '...................................................';
             }
 
             // Sync signature to cloned canvas
@@ -1899,8 +1903,8 @@ function ReportSection({
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <span className="text-xs sm:text-sm font-black text-slate-600 whitespace-nowrap">👤 Họ và tên học sinh:</span>
-            <div className="flex-1 relative min-h-[32px] flex items-center border-b-2 border-dashed border-sky-300">
-              <span className="student-name-export hidden text-sm sm:text-base font-black text-slate-800 px-1 py-0.5 leading-normal">
+            <div className="flex-1 flex items-center border-b-2 border-dashed border-sky-300 pb-0.5">
+              <span className="student-name-export hidden text-sm sm:text-base font-black text-sky-950 px-1 leading-normal">
                 {state.studentName ? state.studentName : '...................................................'}
               </span>
               <input
@@ -1908,7 +1912,7 @@ function ReportSection({
                 placeholder="Nhập họ và tên của em..."
                 value={state.studentName}
                 onChange={(e) => setState((prev) => ({ ...prev, studentName: e.target.value }))}
-                className="student-name-input w-full focus:border-pink-500 outline-hidden px-1 py-0.5 text-sm sm:text-base font-black text-slate-800 bg-transparent leading-normal"
+                className="student-name-input w-full focus:border-pink-500 outline-hidden px-1 py-0.5 text-sm sm:text-base font-black text-sky-950 bg-transparent leading-normal placeholder:font-normal placeholder:text-slate-400"
               />
             </div>
           </div>
