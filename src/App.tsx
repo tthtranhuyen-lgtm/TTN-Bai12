@@ -47,7 +47,7 @@ declare global {
         hideCharacter: () => void;
       };
     };
-    html2canvas?: (element: HTMLElement) => Promise<HTMLCanvasElement>;
+    html2canvas?: (element: HTMLElement, options?: Record<string, unknown>) => Promise<HTMLCanvasElement>;
   }
 }
 
@@ -1833,9 +1833,38 @@ function ReportSection({
     if (window.html2canvas) {
       try {
         showToast('📷 Đang xuất phiếu báo cáo...');
-        const canvas = await window.html2canvas(reportRef.current);
+        const canvas = await window.html2canvas(reportRef.current, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          onclone: (clonedDoc: Document) => {
+            // Swap input to clean text container so html2canvas renders text cleanly without baseline clipping
+            const inputEl = clonedDoc.querySelector('.student-name-input') as HTMLInputElement | null;
+            const textSpan = clonedDoc.querySelector('.student-name-export') as HTMLElement | null;
+            if (inputEl) {
+              inputEl.style.display = 'none';
+            }
+            if (textSpan) {
+              textSpan.style.display = 'block';
+              textSpan.textContent = state.studentName ? state.studentName.trim() : '...................................................';
+            }
+
+            // Sync signature to cloned canvas
+            if (state.signature) {
+              const originalCanvas = canvasRef.current;
+              const clonedCanvas = clonedDoc.querySelector('#sigCanvas') as HTMLCanvasElement | null;
+              if (originalCanvas && clonedCanvas) {
+                const ctx = clonedCanvas.getContext('2d');
+                if (ctx) {
+                  ctx.drawImage(originalCanvas, 0, 0);
+                }
+              }
+            }
+          }
+        });
         const link = document.createElement('a');
-        link.download = `Bao-cao-on-tap-Bai-12-${state.studentName || 'HocSinh'}.png`;
+        link.download = `Bao-cao-on-tap-Bai-12-${state.studentName ? state.studentName.trim().replace(/\s+/g, '-') : 'HocSinh'}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
         showToast('🎉 Đã tải ảnh phiếu báo cáo về máy!');
@@ -1869,18 +1898,23 @@ function ReportSection({
         {/* Info fields */}
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <span className="text-xs font-black text-slate-600 whitespace-nowrap">👤 Họ và tên học sinh:</span>
-            <input
-              type="text"
-              placeholder="Nhập họ và tên của em..."
-              value={state.studentName}
-              onChange={(e) => setState((prev) => ({ ...prev, studentName: e.target.value }))}
-              className="flex-1 border-b-2 border-dashed border-sky-300 focus:border-pink-500 outline-hidden px-2 py-1 text-sm font-black text-slate-800"
-            />
+            <span className="text-xs sm:text-sm font-black text-slate-600 whitespace-nowrap">👤 Họ và tên học sinh:</span>
+            <div className="flex-1 relative min-h-[32px] flex items-center border-b-2 border-dashed border-sky-300">
+              <span className="student-name-export hidden text-sm sm:text-base font-black text-slate-800 px-1 py-0.5 leading-normal">
+                {state.studentName ? state.studentName : '...................................................'}
+              </span>
+              <input
+                type="text"
+                placeholder="Nhập họ và tên của em..."
+                value={state.studentName}
+                onChange={(e) => setState((prev) => ({ ...prev, studentName: e.target.value }))}
+                className="student-name-input w-full focus:border-pink-500 outline-hidden px-1 py-0.5 text-sm sm:text-base font-black text-slate-800 bg-transparent leading-normal"
+              />
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-black text-slate-600 whitespace-nowrap">📅 Ngày học:</span>
-            <span className="text-xs font-mono font-black text-slate-700">{today}</span>
+            <span className="text-xs sm:text-sm font-black text-slate-600 whitespace-nowrap">📅 Ngày học:</span>
+            <span className="text-xs sm:text-sm font-mono font-black text-slate-700">{today}</span>
           </div>
         </div>
 

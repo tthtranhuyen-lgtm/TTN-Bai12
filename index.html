@@ -3,6 +3,36 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <script>
+      // Make window.fetch writable and configurable so browser extension interceptors don't throw TypeError
+      try {
+        let _fetch = window.fetch;
+        Object.defineProperty(window, 'fetch', {
+          configurable: true,
+          enumerable: true,
+          get() {
+            return _fetch;
+          },
+          set(fn) {
+            _fetch = fn;
+          }
+        });
+      } catch (e) {
+        // ignore
+      }
+
+      // Suppress unhandled exceptions originating from browser extensions
+      window.addEventListener('error', function (event) {
+        if (
+          (event.filename && event.filename.includes('chrome-extension://')) ||
+          (event.error && event.error.stack && event.error.stack.includes('chrome-extension://'))
+        ) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          return true;
+        }
+      }, true);
+    </script>
     <title>中文乐园 · Bài 12 · Lớp Thanh Thiếu Niên</title>
     <meta name="description" content="Ứng dụng học và ôn tập từ vựng, ngữ pháp, luyện viết chữ Hán và trò chơi tiếng Trung Bài 12 với âm thanh lồng tiếng chuẩn xác." />
     <meta property="og:title" content="中文乐园 · Bài 12 · Lớp Thanh Thiếu Niên" />
