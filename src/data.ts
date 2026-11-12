@@ -9,34 +9,37 @@ export interface AudioWordSync {
   audioFile: string;
 }
 
-export const MASTER_AUDIO_SRC = '/assets/aistudio/luvvoice.com-20261112-03kFkB_3bc03754.mp3';
+const BASE = import.meta.env.BASE_URL || './';
+const cleanBase = BASE.endsWith('/') ? BASE : `${BASE}/`;
+
+export const MASTER_AUDIO_SRC = `${cleanBase}assets/aistudio/luvvoice.com-20261112-03kFkB_3bc03754.mp3`;
 
 export const AUDIO_SYNCS: AudioWordSync[] = [
-  { id: 'xianzai', word: '现在', start: 0.35, end: 0.83, dur: 0.48, pinyin: 'xiànzài', meaning: 'Bây giờ', audioFile: '/audio/words/xianzai.mp3' },
-  { id: 'shangwu', word: '上午', start: 1.20, end: 1.68, dur: 0.48, pinyin: 'shàngwǔ', meaning: 'Buổi sáng', audioFile: '/audio/words/shangwu.mp3' },
-  { id: 'ji', word: '几', start: 2.20, end: 2.55, dur: 0.35, pinyin: 'jǐ', meaning: 'Mấy', audioFile: '/audio/words/ji.mp3' },
-  { id: 'shangke', word: '上课', start: 2.92, end: 3.50, dur: 0.58, pinyin: 'shàngkè', meaning: 'Đi học / Vào lớp', audioFile: '/audio/words/shangke.mp3' },
-  { id: 'dian', word: '点', start: 3.97, end: 4.35, dur: 0.38, pinyin: 'diǎn', meaning: 'Giờ', audioFile: '/audio/words/dian.mp3' },
-  { id: 'dianzhong', word: '点钟', start: 4.72, end: 5.30, dur: 0.58, pinyin: 'diǎnzhōng', meaning: 'Giờ (đầy đủ)', audioFile: '/audio/words/dianzhong.mp3' },
-  { id: 'xiake', word: '下课', start: 5.73, end: 6.33, dur: 0.60, pinyin: 'xiàkè', meaning: 'Tan học', audioFile: '/audio/words/xiake.mp3' },
-  { id: 'fen', word: '分', start: 6.91, end: 7.23, dur: 0.32, pinyin: 'fēn', meaning: 'Phút', audioFile: '/audio/words/fen.mp3' },
-  { id: 'fenzhong', word: '分钟', start: 7.72, end: 8.22, dur: 0.50, pinyin: 'fēnzhōng', meaning: 'Phút (đầy đủ)', audioFile: '/audio/words/fenzhong.mp3' },
-  { id: 'zhongwu', word: '中午', start: 8.66, end: 9.26, dur: 0.60, pinyin: 'zhōngwǔ', meaning: 'Buổi trưa', audioFile: '/audio/words/zhongwu.mp3' },
-  { id: 'ling', word: '零', start: 9.72, end: 10.12, dur: 0.40, pinyin: 'líng', meaning: 'Số 0', audioFile: '/audio/words/ling.mp3' },
-  { id: 'ke', word: '刻', start: 10.56, end: 10.91, dur: 0.35, pinyin: 'kè', meaning: 'Khắc (15 phút)', audioFile: '/audio/words/ke.mp3' },
-  { id: 'zaoshang', word: '早上', start: 11.40, end: 11.92, dur: 0.52, pinyin: 'zǎoshang', meaning: 'Buổi sáng sớm', audioFile: '/audio/words/zaoshang.mp3' },
-  { id: 'wanshang', word: '晚上', start: 12.31, end: 12.83, dur: 0.52, pinyin: 'wǎnshang', meaning: 'Buổi tối', audioFile: '/audio/words/wanshang.mp3' },
-  { id: 'jintian', word: '今天', start: 13.33, end: 13.83, dur: 0.50, pinyin: 'jīntiān', meaning: 'Hôm nay', audioFile: '/audio/words/jintian.mp3' },
-  { id: 'zuotian', word: '昨天', start: 14.32, end: 14.80, dur: 0.48, pinyin: 'zuótiān', meaning: 'Hôm qua', audioFile: '/audio/words/zuotian.mp3' },
-  { id: 'mingtian', word: '明天', start: 15.17, end: 15.77, dur: 0.60, pinyin: 'míngtiān', meaning: 'Ngày mai', audioFile: '/audio/words/mingtian.mp3' },
-  { id: 'lingchen', word: '凌晨', start: 16.18, end: 16.83, dur: 0.65, pinyin: 'língchén', meaning: 'Rạng sáng', audioFile: '/audio/words/lingchen.mp3' },
-  { id: 'zaofan', word: '早饭', start: 17.29, end: 17.82, dur: 0.53, pinyin: 'zǎofàn', meaning: 'Bữa sáng', audioFile: '/audio/words/zaofan.mp3' },
-  { id: 'wufan', word: '午饭', start: 18.37, end: 18.89, dur: 0.52, pinyin: 'wǔfàn', meaning: 'Bữa trưa', audioFile: '/audio/words/wufan.mp3' },
-  { id: 'wanfan', word: '晚饭', start: 19.36, end: 19.89, dur: 0.53, pinyin: 'wǎnfàn', meaning: 'Bữa tối', audioFile: '/audio/words/wanfan.mp3' },
-  { id: 'qichuang', word: '起床', start: 20.35, end: 20.96, dur: 0.61, pinyin: 'qǐchuáng', meaning: 'Thức dậy', audioFile: '/audio/words/qichuang.mp3' },
-  { id: 'chifan', word: '吃饭', start: 21.36, end: 21.86, dur: 0.50, pinyin: 'chīfàn', meaning: 'Ăn cơm', audioFile: '/audio/words/chifan.mp3' },
-  { id: 'huijia', word: '回家', start: 22.37, end: 22.87, dur: 0.50, pinyin: 'huíjiā', meaning: 'Về nhà', audioFile: '/audio/words/huijia.mp3' },
-  { id: 'shuijiao', word: '睡觉', start: 23.24, end: 23.70, dur: 0.46, pinyin: 'shuìjiào', meaning: 'Ngủ', audioFile: '/audio/words/shuijiao.mp3' }
+  { id: 'xianzai', word: '现在', start: 0.35, end: 0.83, dur: 0.48, pinyin: 'xiànzài', meaning: 'Bây giờ', audioFile: `${cleanBase}audio/words/xianzai.mp3` },
+  { id: 'shangwu', word: '上午', start: 1.20, end: 1.68, dur: 0.48, pinyin: 'shàngwǔ', meaning: 'Buổi sáng', audioFile: `${cleanBase}audio/words/shangwu.mp3` },
+  { id: 'ji', word: '几', start: 2.20, end: 2.55, dur: 0.35, pinyin: 'jǐ', meaning: 'Mấy', audioFile: `${cleanBase}audio/words/ji.mp3` },
+  { id: 'shangke', word: '上课', start: 2.92, end: 3.50, dur: 0.58, pinyin: 'shàngkè', meaning: 'Đi học / Vào lớp', audioFile: `${cleanBase}audio/words/shangke.mp3` },
+  { id: 'dian', word: '点', start: 3.97, end: 4.35, dur: 0.38, pinyin: 'diǎn', meaning: 'Giờ', audioFile: `${cleanBase}audio/words/dian.mp3` },
+  { id: 'dianzhong', word: '点钟', start: 4.72, end: 5.30, dur: 0.58, pinyin: 'diǎnzhōng', meaning: 'Giờ (đầy đủ)', audioFile: `${cleanBase}audio/words/dianzhong.mp3` },
+  { id: 'xiake', word: '下课', start: 5.73, end: 6.33, dur: 0.60, pinyin: 'xiàkè', meaning: 'Tan học', audioFile: `${cleanBase}audio/words/xiake.mp3` },
+  { id: 'fen', word: '分', start: 6.91, end: 7.23, dur: 0.32, pinyin: 'fēn', meaning: 'Phút', audioFile: `${cleanBase}audio/words/fen.mp3` },
+  { id: 'fenzhong', word: '分钟', start: 7.72, end: 8.22, dur: 0.50, pinyin: 'fēnzhōng', meaning: 'Phút (đầy đủ)', audioFile: `${cleanBase}audio/words/fenzhong.mp3` },
+  { id: 'zhongwu', word: '中午', start: 8.66, end: 9.26, dur: 0.60, pinyin: 'zhōngwǔ', meaning: 'Buổi trưa', audioFile: `${cleanBase}audio/words/zhongwu.mp3` },
+  { id: 'ling', word: '零', start: 9.72, end: 10.12, dur: 0.40, pinyin: 'líng', meaning: 'Số 0', audioFile: `${cleanBase}audio/words/ling.mp3` },
+  { id: 'ke', word: '刻', start: 10.56, end: 10.91, dur: 0.35, pinyin: 'kè', meaning: 'Khắc (15 phút)', audioFile: `${cleanBase}audio/words/ke.mp3` },
+  { id: 'zaoshang', word: '早上', start: 11.40, end: 11.92, dur: 0.52, pinyin: 'zǎoshang', meaning: 'Buổi sáng sớm', audioFile: `${cleanBase}audio/words/zaoshang.mp3` },
+  { id: 'wanshang', word: '晚上', start: 12.31, end: 12.83, dur: 0.52, pinyin: 'wǎnshang', meaning: 'Buổi tối', audioFile: `${cleanBase}audio/words/wanshang.mp3` },
+  { id: 'jintian', word: '今天', start: 13.33, end: 13.83, dur: 0.50, pinyin: 'jīntiān', meaning: 'Hôm nay', audioFile: `${cleanBase}audio/words/jintian.mp3` },
+  { id: 'zuotian', word: '昨天', start: 14.32, end: 14.80, dur: 0.48, pinyin: 'zuótiān', meaning: 'Hôm qua', audioFile: `${cleanBase}audio/words/zuotian.mp3` },
+  { id: 'mingtian', word: '明天', start: 15.17, end: 15.77, dur: 0.60, pinyin: 'míngtiān', meaning: 'Ngày mai', audioFile: `${cleanBase}audio/words/mingtian.mp3` },
+  { id: 'lingchen', word: '凌晨', start: 16.18, end: 16.83, dur: 0.65, pinyin: 'língchén', meaning: 'Rạng sáng', audioFile: `${cleanBase}audio/words/lingchen.mp3` },
+  { id: 'zaofan', word: '早饭', start: 17.29, end: 17.82, dur: 0.53, pinyin: 'zǎofàn', meaning: 'Bữa sáng', audioFile: `${cleanBase}audio/words/zaofan.mp3` },
+  { id: 'wufan', word: '午饭', start: 18.37, end: 18.89, dur: 0.52, pinyin: 'wǔfàn', meaning: 'Bữa trưa', audioFile: `${cleanBase}audio/words/wufan.mp3` },
+  { id: 'wanfan', word: '晚饭', start: 19.36, end: 19.89, dur: 0.53, pinyin: 'wǎnfàn', meaning: 'Bữa tối', audioFile: `${cleanBase}audio/words/wanfan.mp3` },
+  { id: 'qichuang', word: '起床', start: 20.35, end: 20.96, dur: 0.61, pinyin: 'qǐchuáng', meaning: 'Thức dậy', audioFile: `${cleanBase}audio/words/qichuang.mp3` },
+  { id: 'chifan', word: '吃饭', start: 21.36, end: 21.86, dur: 0.50, pinyin: 'chīfàn', meaning: 'Ăn cơm', audioFile: `${cleanBase}audio/words/chifan.mp3` },
+  { id: 'huijia', word: '回家', start: 22.37, end: 22.87, dur: 0.50, pinyin: 'huíjiā', meaning: 'Về nhà', audioFile: `${cleanBase}audio/words/huijia.mp3` },
+  { id: 'shuijiao', word: '睡觉', start: 23.24, end: 23.70, dur: 0.46, pinyin: 'shuìjiào', meaning: 'Ngủ', audioFile: `${cleanBase}audio/words/shuijiao.mp3` }
 ];
 
 export interface VocabExample {
