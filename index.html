@@ -6,17 +6,20 @@
     <script>
       // Make window.fetch writable and configurable so browser extension interceptors don't throw TypeError
       try {
-        let _fetch = window.fetch;
-        Object.defineProperty(window, 'fetch', {
-          configurable: true,
-          enumerable: true,
-          get() {
-            return _fetch;
-          },
-          set(fn) {
-            _fetch = fn;
-          }
-        });
+        var desc = Object.getOwnPropertyDescriptor(window, 'fetch');
+        if (!desc || desc.configurable) {
+          var _fetch = typeof window.fetch === 'function' ? window.fetch.bind(window) : window.fetch;
+          Object.defineProperty(window, 'fetch', {
+            configurable: true,
+            enumerable: true,
+            get: function () {
+              return _fetch;
+            },
+            set: function (fn) {
+              _fetch = fn;
+            }
+          });
+        }
       } catch (e) {
         // ignore
       }
@@ -31,7 +34,19 @@
           event.stopImmediatePropagation();
           return true;
         }
+        if (!window.__ZH_APP_MOUNTED__) {
+          window.__ZH_BOOT_ERROR__ = (event.message || 'Lỗi tải script') + (event.filename ? ' (' + event.filename + ')' : '');
+        }
       }, true);
+
+      window.addEventListener('unhandledrejection', function (event) {
+        if (
+          (event.reason && event.reason.stack && event.reason.stack.includes('chrome-extension://')) ||
+          (event.reason && typeof event.reason === 'string' && event.reason.includes('chrome-extension://'))
+        ) {
+          event.preventDefault();
+        }
+      });
     </script>
     <title>中文乐园 · Bài 12 · Lớp Thanh Thiếu Niên</title>
     <meta name="description" content="Ứng dụng học và ôn tập từ vựng, ngữ pháp, luyện viết chữ Hán và trò chơi tiếng Trung Bài 12 với âm thanh lồng tiếng chuẩn xác." />
@@ -42,11 +57,37 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5.0/dist/hanzi-writer.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5.0/dist/hanzi-writer.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   </head>
   <body class="min-h-screen bg-slate-50 antialiased selection:bg-pink-200">
-    <div id="root"></div>
+    <div id="root">
+      <div id="boot-fallback" style="display:none;max-width:560px;margin:48px auto;padding:24px;background:#fff;border-radius:20px;border:2px solid #fbcfe8;font-family:sans-serif;text-align:center;box-shadow:0 10px 25px rgba(0,0,0,0.06);">
+        <h2 style="color:#db2777;margin:0 0 8px;">🎒 Không thể tải ứng dụng trên GitHub Pages</h2>
+        <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 12px;">
+          Nếu bạn đang mở từ GitHub Pages và gặp màn hình này, nguyên nhân phổ biến nhất là GitHub Pages đang phục vụ trực tiếp nhánh gốc (<code>main</code>) thay vì bản build từ <b>GitHub Actions</b>.
+        </p>
+        <p style="color:#334155;font-size:13px;line-height:1.6;text-align:left;background:#f8fafc;padding:12px;border-radius:12px;margin:0 0 12px;">
+          <b>Cách khắc phục trên GitHub:</b><br/>
+          1. Vào <b>Settings → Pages</b> trong repository GitHub.<br/>
+          2. Ở mục <b>Build and deployment → Source</b>, đổi thành <b>GitHub Actions</b>.<br/>
+          3. Vào tab <b>Actions</b> và chạy lại workflow <b>Deploy to GitHub Pages</b>.
+        </p>
+        <p id="boot-error-detail" style="color:#dc2626;font-size:12px;margin:0;"></p>
+      </div>
+    </div>
+    <script>
+      setTimeout(function () {
+        if (!window.__ZH_APP_MOUNTED__) {
+          var el = document.getElementById('boot-fallback');
+          if (el) el.style.display = 'block';
+          var detail = document.getElementById('boot-error-detail');
+          if (detail && window.__ZH_BOOT_ERROR__) {
+            detail.textContent = 'Chi tiết lỗi: ' + window.__ZH_BOOT_ERROR__;
+          }
+        }
+      }, 3000);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

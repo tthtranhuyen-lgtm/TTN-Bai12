@@ -10,17 +10,21 @@ class AudioService {
   private bgmInterval: number | null = null;
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      this.masterAudio = new Audio(MASTER_AUDIO_SRC);
-      this.masterAudio.preload = 'auto';
+    if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
+      try {
+        this.masterAudio = new Audio(MASTER_AUDIO_SRC);
+        this.masterAudio.preload = 'auto';
 
-      this.masterAudio.addEventListener('timeupdate', () => {
-        this.notifyListeners();
-      });
+        this.masterAudio.addEventListener('timeupdate', () => {
+          this.notifyListeners();
+        });
 
-      this.masterAudio.addEventListener('play', () => this.notifyListeners());
-      this.masterAudio.addEventListener('pause', () => this.notifyListeners());
-      this.masterAudio.addEventListener('ended', () => this.notifyListeners());
+        this.masterAudio.addEventListener('play', () => this.notifyListeners());
+        this.masterAudio.addEventListener('pause', () => this.notifyListeners());
+        this.masterAudio.addEventListener('ended', () => this.notifyListeners());
+      } catch (e) {
+        console.warn('Audio init warning:', e);
+      }
     }
   }
 

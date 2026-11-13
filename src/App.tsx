@@ -77,13 +77,7 @@ export default function App() {
 
   // Saved Data
   const [state, setState] = useState<AppState>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch {
-      // Ignore
-    }
-    return {
+    const defaultState: AppState = {
       learnedVocab: [],
       fillDone: [],
       timeDone: [],
@@ -93,6 +87,27 @@ export default function App() {
       studentName: '',
       signature: ''
     };
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          return {
+            learnedVocab: Array.isArray(parsed.learnedVocab) ? parsed.learnedVocab : [],
+            fillDone: Array.isArray(parsed.fillDone) ? parsed.fillDone : [],
+            timeDone: Array.isArray(parsed.timeDone) ? parsed.timeDone : [],
+            sortDone: Array.isArray(parsed.sortDone) ? parsed.sortDone : [],
+            writtenChars: Array.isArray(parsed.writtenChars) ? parsed.writtenChars : [],
+            gameHighScore: typeof parsed.gameHighScore === 'number' ? parsed.gameHighScore : 0,
+            studentName: typeof parsed.studentName === 'string' ? parsed.studentName : '',
+            signature: typeof parsed.signature === 'string' ? parsed.signature : ''
+          };
+        }
+      }
+    } catch {
+      // Ignore
+    }
+    return defaultState;
   });
 
   // Save state

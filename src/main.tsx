@@ -54,6 +54,14 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   }
 }
 
+declare global {
+  interface Window {
+    __ZH_APP_MOUNTED__?: boolean;
+  }
+}
+
+window.__ZH_APP_MOUNTED__ = true;
+
 createRoot(document.getElementById('root')!).render(
   <ErrorBoundary>
     <App />
