@@ -1850,6 +1850,21 @@ function ReportSection({
     }
   }, [state.signature]);
 
+  const getCanvasPoint = (
+    canvas: HTMLCanvasElement,
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const scaleX = rect.width > 0 ? canvas.width / rect.width : 1;
+    const scaleY = rect.height > 0 ? canvas.height / rect.height : 1;
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
+  };
+
   const startDraw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     const canvas = canvasRef.current;
@@ -1858,12 +1873,14 @@ function ReportSection({
     if (!ctx) return;
 
     setIsDrawing(true);
-    const rect = canvas.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const { x, y } = getCanvasPoint(canvas, e);
 
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#2b3a55';
     ctx.beginPath();
-    ctx.moveTo(clientX - rect.left, clientY - rect.top);
+    ctx.moveTo(x, y);
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -1874,11 +1891,9 @@ function ReportSection({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const { x, y } = getCanvasPoint(canvas, e);
 
-    ctx.lineTo(clientX - rect.left, clientY - rect.top);
+    ctx.lineTo(x, y);
     ctx.stroke();
     setHasSignature(true);
   };
@@ -1909,55 +1924,301 @@ function ReportSection({
     showToast('💾 Đã lưu chữ ký phụ huynh thành công!');
   };
 
-  const handleExportImage = async () => {
-    if (!reportRef.current) return;
-    if (window.html2canvas) {
-      try {
-        showToast('📷 Đang xuất phiếu báo cáo...');
-        const canvas = await window.html2canvas(reportRef.current, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-          onclone: (clonedDoc: Document) => {
-            // Swap input to clean text container so html2canvas renders text cleanly without baseline clipping
-            const inputEl = clonedDoc.querySelector('.student-name-input') as HTMLInputElement | null;
-            const textSpan = clonedDoc.querySelector('.student-name-export') as HTMLElement | null;
-            if (inputEl) {
-              inputEl.remove();
-            }
-            if (textSpan) {
-              textSpan.classList.remove('hidden');
-              textSpan.style.display = 'inline-block';
-              textSpan.style.verticalAlign = 'middle';
-              textSpan.textContent = state.studentName && state.studentName.trim()
-                ? state.studentName.trim()
-                : '...................................................';
-            }
+  const drawRoundedRect = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    r: number
+  ) => {
+    const radius = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.arcTo(x + w, y, x + w, y + h, radius);
+    ctx.arcTo(x + w, y + h, x, y + h, radius);
+    ctx.arcTo(x, y + h, x, y, radius);
+    ctx.arcTo(x, y, x + w, y, radius);
+    ctx.closePath();
+  };
 
-            // Sync signature to cloned canvas
-            if (state.signature) {
-              const originalCanvas = canvasRef.current;
-              const clonedCanvas = clonedDoc.querySelector('#sigCanvas') as HTMLCanvasElement | null;
-              if (originalCanvas && clonedCanvas) {
-                const ctx = clonedCanvas.getContext('2d');
-                if (ctx) {
-                  ctx.drawImage(originalCanvas, 0, 0);
-                }
-              }
-            }
-          }
-        });
-        const link = document.createElement('a');
-        link.download = `Bao-cao-on-tap-Bai-12-${state.studentName ? state.studentName.trim().replace(/\s+/g, '-') : 'HocSinh'}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        showToast('🎉 Đã tải ảnh phiếu báo cáo về máy!');
-      } catch (e) {
-        showToast('⚠️ Không thể xuất ảnh lúc này.');
+  const handleExportImage = async () => {
+    try {
+      showToast('📷 Đang xuất phiếu báo cáo...');
+
+      const W = 760;
+      const H = 860;
+      const scale = 2;
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = W * scale;
+      exportCanvas.height = H * scale;
+      const ctx = exportCanvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('Canvas context unavailable');
       }
-    } else {
-      window.print();
+      ctx.scale(scale, scale);
+
+      const fontSans = '"Nunito", "Quicksand", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif';
+      const fontMono = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
+
+      // Outer backdrop
+      ctx.fillStyle = '#f0f9ff';
+      ctx.fillRect(0, 0, W, H);
+
+      // Card container
+      const pad = 28;
+      const cardX = pad;
+      const cardY = pad;
+      const cardW = W - pad * 2;
+      const cardH = H - pad * 2;
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(14, 165, 233, 0.14)';
+      ctx.shadowBlur = 24;
+      ctx.shadowOffsetY = 8;
+      drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 28);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.restore();
+
+      drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 28);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#e0f2fe';
+      ctx.stroke();
+
+      const innerX = cardX + 36;
+      const innerW = cardW - 72;
+
+      // Header
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `36px ${fontSans}`;
+      ctx.fillStyle = '#1e293b';
+      ctx.fillText('📋', W / 2, cardY + 52);
+
+      ctx.font = `900 28px ${fontSans}`;
+      ctx.fillStyle = '#db2777';
+      ctx.fillText('PHIẾU BÁO CÁO ÔN TẬP', W / 2, cardY + 96);
+
+      ctx.font = `700 14px ${fontSans}`;
+      ctx.fillStyle = '#64748b';
+      ctx.fillText('中文乐园 · Bài 12 · Lớp Thanh Thiếu Niên', W / 2, cardY + 124);
+
+      // Dashed divider
+      ctx.save();
+      ctx.beginPath();
+      ctx.setLineDash([7, 6]);
+      ctx.moveTo(innerX, cardY + 150);
+      ctx.lineTo(innerX + innerW, cardY + 150);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#bae6fd';
+      ctx.stroke();
+      ctx.restore();
+
+      // Student Info
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+
+      const nameY = cardY + 194;
+      ctx.font = `800 16px ${fontSans}`;
+      ctx.fillStyle = '#475569';
+      const labelText = '👤 Họ và tên học sinh:';
+      ctx.fillText(labelText, innerX, nameY);
+      const labelWidth = ctx.measureText(labelText).width;
+
+      const nameFieldX = innerX + labelWidth + 14;
+      const nameFieldEnd = innerX + innerW;
+      const displayName = state.studentName && state.studentName.trim()
+        ? state.studentName.trim()
+        : '...................................................';
+
+      ctx.font = `900 18px ${fontSans}`;
+      ctx.fillStyle = '#0c4a6e';
+      ctx.fillText(displayName, nameFieldX + 4, nameY - 2, Math.max(120, nameFieldEnd - nameFieldX - 8));
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.setLineDash([6, 5]);
+      ctx.moveTo(nameFieldX, nameY + 7);
+      ctx.lineTo(nameFieldEnd, nameY + 7);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#7dd3fc';
+      ctx.stroke();
+      ctx.restore();
+
+      const dateY = cardY + 234;
+      ctx.font = `800 16px ${fontSans}`;
+      ctx.fillStyle = '#475569';
+      const dateLabel = '📅 Ngày học:';
+      ctx.fillText(dateLabel, innerX, dateY);
+      const dateLabelWidth = ctx.measureText(dateLabel).width;
+
+      ctx.font = `800 15px ${fontMono}`;
+      ctx.fillStyle = '#334155';
+      ctx.fillText(today, innerX + dateLabelWidth + 12, dateY);
+
+      // Results title
+      const resultsTitleY = cardY + 280;
+      ctx.font = `900 13px ${fontSans}`;
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('KẾT QUẢ ÔN TẬP', innerX, resultsTitleY);
+
+      const exDone = state.fillDone.length + state.timeDone.length + state.sortDone.length;
+      const exTotal = FILL_QUESTIONS.length + TIME_QUESTIONS.length + SORT_QUESTIONS.length;
+      const rows = [
+        {
+          done: state.learnedVocab.length >= 15,
+          label: 'Học từ vựng (xem ví dụ + nghe phát âm)',
+          score: `${state.learnedVocab.length}/${VOCAB.length}`,
+          color: '#db2777'
+        },
+        {
+          done: exDone >= 10,
+          label: 'Làm bài tập tổng hợp (Điền từ, Viết giờ, Xếp câu)',
+          score: `${exDone}/${exTotal}`,
+          color: '#059669'
+        },
+        {
+          done: state.writtenChars.length >= 5,
+          label: 'Luyện viết chữ Hán theo thứ tự nét',
+          score: `${state.writtenChars.length}/${WRITE_CHARS.length}`,
+          color: '#0284c7'
+        },
+        {
+          done: state.gameHighScore > 0,
+          label: 'Điểm cao nhất trò chơi Đập Chuột',
+          score: `${state.gameHighScore} điểm`,
+          color: '#d97706'
+        }
+      ];
+
+      let rowY = resultsTitleY + 16;
+      const rowH = 54;
+      const rowGap = 12;
+
+      rows.forEach((row) => {
+        drawRoundedRect(ctx, innerX, rowY, innerW, rowH, 14);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.stroke();
+
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.font = `18px ${fontSans}`;
+        ctx.fillStyle = '#1e293b';
+        ctx.fillText(row.done ? '✅' : '⬜', innerX + 16, rowY + rowH / 2);
+
+        ctx.font = `800 14px ${fontSans}`;
+        ctx.fillStyle = '#334155';
+        ctx.fillText(row.label, innerX + 46, rowY + rowH / 2, innerW - 170);
+
+        ctx.textAlign = 'right';
+        ctx.font = `900 15px ${fontMono}`;
+        ctx.fillStyle = row.color;
+        ctx.fillText(row.score, innerX + innerW - 16, rowY + rowH / 2);
+
+        rowY += rowH + rowGap;
+      });
+
+      // Signature Section
+      const sigTitleY = rowY + 20;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.font = `800 15px ${fontSans}`;
+      ctx.fillStyle = '#475569';
+      ctx.fillText('✍️ Chữ ký xác nhận của Phụ Huynh:', innerX, sigTitleY);
+
+      const sigOuterY = sigTitleY + 14;
+      const sigOuterH = cardY + cardH - 34 - sigOuterY;
+      drawRoundedRect(ctx, innerX, sigOuterY, innerW, sigOuterH, 18);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fill();
+      ctx.save();
+      ctx.setLineDash([6, 5]);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#7dd3fc';
+      ctx.stroke();
+      ctx.restore();
+
+      const sigBoxPad = 12;
+      const sigBoxX = innerX + sigBoxPad;
+      const sigBoxY = sigOuterY + sigBoxPad;
+      const sigBoxW = innerW - sigBoxPad * 2;
+      const sigBoxH = sigOuterH - sigBoxPad * 2;
+
+      drawRoundedRect(ctx, sigBoxX, sigBoxY, sigBoxW, sigBoxH, 12);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.stroke();
+
+      const drawContainedSignature = (source: HTMLCanvasElement | HTMLImageElement, srcW: number, srcH: number) => {
+        if (!srcW || !srcH) return;
+        const ratio = Math.min(sigBoxW / srcW, sigBoxH / srcH);
+        const drawW = srcW * ratio;
+        const drawH = srcH * ratio;
+        const drawX = sigBoxX + (sigBoxW - drawW) / 2;
+        const drawY = sigBoxY + (sigBoxH - drawH) / 2;
+        ctx.drawImage(source, drawX, drawY, drawW, drawH);
+      };
+
+      // Draw signature from live canvas (even if user didn't click Save yet)
+      if (canvasRef.current && hasSignature) {
+        drawContainedSignature(canvasRef.current, canvasRef.current.width, canvasRef.current.height);
+      } else if (state.signature) {
+        await new Promise<void>((resolve) => {
+          const sigImg = new Image();
+          sigImg.onload = () => {
+            drawContainedSignature(sigImg, sigImg.naturalWidth || 560, sigImg.naturalHeight || 120);
+            resolve();
+          };
+          sigImg.onerror = () => resolve();
+          sigImg.src = state.signature;
+        });
+      }
+
+      const fileName = `Bao-cao-on-tap-Bai-12-${
+        state.studentName ? state.studentName.trim().replace(/\s+/g, '-') : 'HocSinh'
+      }.png`;
+
+      // Auto-save signature if drawn but not saved yet
+      if (canvasRef.current && hasSignature && !state.signature) {
+        const sigDataUrl = canvasRef.current.toDataURL('image/png');
+        setState((prev) => ({ ...prev, signature: sigDataUrl }));
+      }
+
+      const triggerDownload = (url: string, revokeAfter = false) => {
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        if (revokeAfter) {
+          setTimeout(() => URL.revokeObjectURL(url), 10000);
+        }
+      };
+
+      if (exportCanvas.toBlob) {
+        exportCanvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            triggerDownload(url, true);
+          } else {
+            triggerDownload(exportCanvas.toDataURL('image/png'));
+          }
+          showToast('🎉 Đã tải ảnh phiếu báo cáo về máy!');
+        }, 'image/png');
+      } else {
+        triggerDownload(exportCanvas.toDataURL('image/png'));
+        showToast('🎉 Đã tải ảnh phiếu báo cáo về máy!');
+      }
+    } catch (e) {
+      console.error('Export report error:', e);
+      showToast('⚠️ Không thể xuất ảnh lúc này.');
     }
   };
 
@@ -2056,6 +2317,7 @@ function ReportSection({
           <h4 className="text-xs font-black text-slate-600">✍️ Chữ ký xác nhận của Phụ Huynh:</h4>
           <div className="border-2 border-dashed border-sky-300 rounded-2xl p-2 bg-slate-50/50">
             <canvas
+              id="sigCanvas"
               ref={canvasRef}
               width={560}
               height={120}
