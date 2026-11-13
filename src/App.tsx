@@ -232,6 +232,7 @@ export default function App() {
             <button
               key={tab.id}
               onClick={() => {
+                audioService.stopBGM();
                 setActiveTab(tab.id as any);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
@@ -1525,8 +1526,8 @@ function WhackMoleGame({
     setTimeLeft(60);
     setIsRunning(true);
     setIsPaused(false);
+    setActiveMole(null);
     pickNextTarget();
-    audioService.startBGM();
   };
 
   const stopGame = () => {
@@ -1534,6 +1535,7 @@ function WhackMoleGame({
     setIsPaused(false);
     setActiveMole(null);
     audioService.stopBGM();
+    audioService.stopAll();
 
     if (score > highScore) {
       onUpdateScore(score);
@@ -1541,13 +1543,27 @@ function WhackMoleGame({
     }
   };
 
+  // Sync BGM strictly with running & unpaused state, and always clean up on unmount
+  useEffect(() => {
+    if (isRunning && !isPaused) {
+      audioService.startBGM();
+    } else {
+      audioService.stopBGM();
+      if (isPaused) {
+        audioService.stopAll();
+      }
+    }
+    return () => {
+      audioService.stopBGM();
+    };
+  }, [isRunning, isPaused]);
+
   // Timer
   useEffect(() => {
     if (!isRunning || isPaused) return;
     const timer = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
-          stopGame();
           return 0;
         }
         return t - 1;
@@ -1555,6 +1571,13 @@ function WhackMoleGame({
     }, 1000);
     return () => clearInterval(timer);
   }, [isRunning, isPaused]);
+
+  // End game cleanly when timeLeft hits 0
+  useEffect(() => {
+    if (isRunning && timeLeft === 0) {
+      stopGame();
+    }
+  }, [isRunning, timeLeft]);
 
   // Mole pop interval
   useEffect(() => {
@@ -1574,8 +1597,8 @@ function WhackMoleGame({
 
       setTimeout(() => {
         setActiveMole((cur) => (cur?.holeIndex === hole ? null : cur));
-      }, 1300);
-    }, 1100);
+      }, 1450);
+    }, 1250);
 
     return () => clearInterval(interval);
   }, [isRunning, isPaused, currentTarget]);
@@ -1618,7 +1641,7 @@ function WhackMoleGame({
   };
 
   return (
-    <div className="bg-white/95 rounded-3xl p-6 shadow-lg shadow-sky-100/50 border border-white">
+    <div className="bg-white/95 rounded-3xl p-4 sm:p-6 shadow-lg shadow-sky-100/50 border border-white">
       {/* Header bar */}
       <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
         <div>
@@ -1628,7 +1651,7 @@ function WhackMoleGame({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center flex-wrap gap-2">
           <div className="text-xs font-black text-slate-700 bg-slate-100 px-3 py-1.5 rounded-xl">
             Điểm: <span className="text-pink-600 font-mono text-base font-black">{score}</span>
           </div>
@@ -1636,20 +1659,28 @@ function WhackMoleGame({
             ⏱️ <span className="text-sky-600 font-mono text-base font-black">{timeLeft}s</span>
           </div>
           {isRunning && (
-            <button
-              onClick={() => setIsPaused(!isPaused)}
-              className="px-3 py-1.5 rounded-xl bg-slate-200 text-slate-700 text-xs font-black hover:bg-slate-300 cursor-pointer"
-            >
-              {isPaused ? '▶️ Tiếp tục' : '⏸️ Tạm dừng'}
-            </button>
+            <>
+              <button
+                onClick={() => setIsPaused((p) => !p)}
+                className="px-3 py-1.5 rounded-xl bg-amber-100 text-amber-800 text-xs font-black hover:bg-amber-200 cursor-pointer"
+              >
+                {isPaused ? '▶️ Tiếp tục' : '⏸️ Tạm dừng'}
+              </button>
+              <button
+                onClick={stopGame}
+                className="px-3 py-1.5 rounded-xl bg-rose-100 text-rose-700 text-xs font-black hover:bg-rose-200 cursor-pointer"
+              >
+                ⏹️ Dừng chơi
+              </button>
+            </>
           )}
         </div>
       </div>
 
       {/* Target Word Banner */}
-      <div className="p-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-2xl text-center shadow-md mb-4 flex items-center justify-center gap-2">
-        <span className="text-xs font-bold uppercase tracking-wider">Mục tiêu đập chuột:</span>
-        <span className="text-lg font-black bg-white text-pink-600 px-3 py-0.5 rounded-full shadow-xs">
+      <div className="p-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-2xl text-center shadow-md mb-4 flex items-center justify-center flex-wrap gap-2">
+        <span className="text-xs sm:text-sm font-bold uppercase tracking-wider">Mục tiêu đập chuột:</span>
+        <span className="text-lg sm:text-xl font-black bg-white text-pink-600 px-4 py-0.5 rounded-full shadow-xs">
           {currentTarget.vi}
         </span>
       </div>
@@ -1659,7 +1690,7 @@ function WhackMoleGame({
         ref={stageRef}
         onMouseMove={handleStageMouseMove}
         onMouseLeave={() => setHammerPos(null)}
-        className="relative bg-gradient-to-b from-emerald-300 to-emerald-500 rounded-3xl p-6 shadow-inner overflow-hidden select-none min-h-[360px] flex items-center justify-center cursor-none"
+        className="relative bg-gradient-to-b from-emerald-300 to-emerald-500 rounded-3xl p-4 sm:p-6 shadow-inner overflow-hidden select-none min-h-[380px] flex items-center justify-center cursor-none"
       >
         {/* Custom Hammer */}
         {hammerPos && isRunning && !isPaused && (
@@ -1677,52 +1708,87 @@ function WhackMoleGame({
         )}
 
         {/* 9 Holes Grid */}
-        <div className="grid grid-cols-3 gap-4 sm:gap-6 w-full max-w-md">
+        <div className="grid grid-cols-3 gap-3 sm:gap-6 w-full max-w-lg">
           {Array.from({ length: 9 }).map((_, idx) => {
             const isMoleHere = activeMole?.holeIndex === idx;
+            const moleWord = isMoleHere ? activeMole.word : '';
 
             return (
               <div
                 key={idx}
                 onClick={() => handleHoleClick(idx)}
-                className="relative aspect-square rounded-full bg-amber-950/80 shadow-[inset_0_8px_16px_rgba(0,0,0,0.6)] flex items-end justify-center overflow-hidden border-4 border-emerald-600/60"
+                className="relative aspect-square rounded-full bg-amber-950/85 shadow-[inset_0_8px_16px_rgba(0,0,0,0.65)] flex items-end justify-center overflow-hidden border-4 border-emerald-600/70"
               >
-                {/* Hole Rim */}
-                <div className="absolute inset-x-0 bottom-0 h-1/3 bg-amber-900/90 rounded-b-full z-20 pointer-events-none" />
-
                 {/* Mole Character */}
                 <div
-                  className={`relative z-10 transition-all duration-150 flex flex-col items-center ${
-                    isMoleHere ? 'translate-y-1 scale-100 opacity-100' : 'translate-y-24 scale-75 opacity-0'
+                  className={`relative z-20 transition-all duration-150 flex flex-col items-center pb-1 sm:pb-2 ${
+                    isMoleHere ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-28 scale-75 opacity-0 pointer-events-none'
                   }`}
                 >
-                  {/* Mole Sign Board */}
-                  <div className="bg-amber-100 border-2 border-amber-600 text-amber-950 px-2 py-0.5 rounded-lg text-xs font-black shadow-md tracking-wider mb-1 z-30 font-sans">
-                    {activeMole?.word}
+                  {/* Enlarged Mole Sign Board */}
+                  <div
+                    className={`bg-amber-50 border-[3px] border-amber-600 text-slate-900 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl font-black shadow-lg mb-1 font-sans whitespace-nowrap leading-none text-center ${
+                      moleWord.length >= 3
+                        ? 'text-lg sm:text-2xl'
+                        : 'text-2xl sm:text-3xl md:text-4xl min-w-[54px] sm:min-w-[74px]'
+                    }`}
+                  >
+                    {moleWord}
                   </div>
 
                   {/* Mole Body/Head */}
-                  <div className="w-14 h-11 bg-slate-400 rounded-t-full relative shadow-inner flex flex-col items-center">
+                  <div className="w-14 h-9 sm:w-18 sm:h-11 bg-amber-700 rounded-t-full relative shadow-inner flex flex-col items-center">
                     {/* Ears */}
-                    <div className="absolute -top-1.5 -left-1 w-4 h-4 bg-pink-300 rounded-full border border-slate-400" />
-                    <div className="absolute -top-1.5 -right-1 w-4 h-4 bg-pink-300 rounded-full border border-slate-400" />
+                    <div className="absolute -top-1.5 -left-1 w-4 h-4 bg-amber-700 rounded-full flex items-center justify-center">
+                      <div className="w-2 h-2 bg-pink-300 rounded-full" />
+                    </div>
+                    <div className="absolute -top-1.5 -right-1 w-4 h-4 bg-amber-700 rounded-full flex items-center justify-center">
+                      <div className="w-2 h-2 bg-pink-300 rounded-full" />
+                    </div>
                     {/* Eyes */}
                     <div className="flex gap-3 mt-2">
-                      <div className="w-1.5 h-2 bg-slate-900 rounded-full" />
-                      <div className="w-1.5 h-2 bg-slate-900 rounded-full" />
+                      <div className="w-1.5 h-2 bg-slate-950 rounded-full" />
+                      <div className="w-1.5 h-2 bg-slate-950 rounded-full" />
                     </div>
                     {/* Nose */}
                     <div className="w-2.5 h-2 bg-pink-400 rounded-full mt-0.5" />
                   </div>
                 </div>
+
+                {/* Hole Rim (sits lower so sign & face remain clearly visible) */}
+                <div className="absolute inset-x-0 bottom-0 h-1/5 bg-amber-900/95 rounded-b-full z-30 pointer-events-none" />
               </div>
             );
           })}
         </div>
 
+        {/* Paused Overlay */}
+        {isRunning && isPaused && (
+          <div className="absolute inset-0 bg-slate-900/55 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center text-white z-40 cursor-auto">
+            <h4 className="text-2xl font-black mb-2">⏸️ Đang tạm dừng</h4>
+            <p className="text-xs text-white/85 font-bold mb-4">
+              Âm thanh và thời gian đã được tạm dừng.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsPaused(false)}
+                className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-sm shadow-xl hover:scale-105 cursor-pointer"
+              >
+                ▶️ Tiếp tục chơi
+              </button>
+              <button
+                onClick={stopGame}
+                className="px-5 py-2.5 rounded-2xl bg-white/20 hover:bg-white/30 text-white font-black text-sm cursor-pointer"
+              >
+                ⏹️ Kết thúc
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Start / Finish Overlay */}
         {!isRunning && (
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center text-white z-40">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center text-white z-40 cursor-auto">
             <h4 className="text-2xl font-black mb-1">🔨 Sẵn sàng Đập Chuột!</h4>
             <p className="text-xs text-white/80 font-bold max-w-xs mb-4">
               Nhìn nghĩa tiếng Việt ở trên, nhanh tay đập vào chú chuột cầm đúng chữ Hán nhé!
