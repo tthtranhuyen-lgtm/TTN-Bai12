@@ -70,22 +70,22 @@ class AudioService {
     return null;
   }
 
-  // Find sync metadata for word or phrase
+  // Find sync metadata ONLY for exact single vocabulary word or slash-separated vocab alias
   public findSync(text: string): AudioWordSync | null {
     const clean = text.trim();
-    // Direct match
+    if (!clean) return null;
+
+    // Direct exact match
     const direct = AUDIO_SYNCS.find((s) => s.word === clean || s.id === clean);
     if (direct) return direct;
 
-    // Check alias or partial match
-    if (clean.includes('点钟')) return AUDIO_SYNCS.find((s) => s.word === '点钟') || null;
-    if (clean.includes('点')) return AUDIO_SYNCS.find((s) => s.word === '点') || null;
-    if (clean.includes('分钟')) return AUDIO_SYNCS.find((s) => s.word === '分钟') || null;
-    if (clean.includes('分')) return AUDIO_SYNCS.find((s) => s.word === '分') || null;
-
-    // Check if word contains any sync word
-    for (const s of AUDIO_SYNCS) {
-      if (clean.includes(s.word)) return s;
+    // Handle slash-separated vocab cards like "点 / 点钟" or "分 / 分钟"
+    if (clean.includes('/')) {
+      const parts = clean.split('/').map((p) => p.trim());
+      for (const part of parts) {
+        const match = AUDIO_SYNCS.find((s) => s.word === part || s.id === part);
+        if (match) return match;
+      }
     }
 
     return null;
@@ -160,6 +160,8 @@ class AudioService {
   /**
    * Fallback to Web Speech API for sentences and unrecorded words
    */
+  private currentUtterance: SpeechSynthesisUtterance | null = null;
+
   public fallbackSpeech(text: string, rate: number): Promise<void> {
     return new Promise((resolve) => {
       if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
@@ -167,8 +169,16 @@ class AudioService {
         return;
       }
       try {
-        window.speechSynthesis.cancel();
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          this.currentUtterance = null;
+          resolve();
+        };
+
         const u = new SpeechSynthesisUtterance(text);
+        this.currentUtterance = u;
         u.lang = 'zh-CN';
         u.rate = rate;
         u.pitch = 1.05;
@@ -177,9 +187,20 @@ class AudioService {
         const zh = voices.find((v) => /zh[-_]?CN/i.test(v.lang)) || voices.find((v) => /^zh/i.test(v.lang));
         if (zh) u.voice = zh;
 
-        u.onend = () => resolve();
-        u.onerror = () => resolve();
-        window.speechSynthesis.speak(u);
+        u.onend = finish;
+        u.onerror = finish;
+
+        // Small delay after stopAll's cancel() prevents Chromium from swallowing the new utterance
+        setTimeout(() => {
+          try {
+            window.speechSynthesis.speak(u);
+          } catch {
+            finish();
+          }
+        }, 30);
+
+        // Safety fallback in case browser doesn't fire onend
+        setTimeout(finish, Math.max(4000, text.length * 450));
       } catch {
         resolve();
       }
